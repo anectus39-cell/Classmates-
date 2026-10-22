@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="google" content="notranslate">
+<title>Classmates IBSS-2022</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1F5F3;--card:#fff;--ink:#10261E;--mute:#566B62;--line:#D5E0DA;--pri:#0F5132;--onpri:#fff;--acc:#F2B705;--ok:#1B7A4B;--no:#B3261E;--warn:#9A6700;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1713;--card:#14251E;--ink:#E8F1EC;--mute:#9DB5A9;--line:#25403A;--pri:#2FA36B;--onpri:#04140D;--ok:#5FD39B;--no:#FF8A80;--warn:#F2B705}}
+:root[data-theme="dark"]{--bg:#0C1713;--card:#14251E;--ink:#E8F1EC;--mute:#9DB5A9;--line:#25403A;--pri:#2FA36B;--onpri:#04140D;--ok:#5FD39B;--no:#FF8A80;--warn:#F2B705}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Figtree,system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:0 14px 40px}
+h1{font-size:26px;font-weight:800;margin:16px 0 0;letter-spacing:-.5px}
+h2{font-size:18px;margin:22px 0 8px}
+.sub{color:var(--mute);margin:2px 0 10px;font-size:14px}
+nav{display:flex;gap:6px;overflow-x:auto;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:8px 0;z-index:5}
+nav button{flex:0 0 auto;padding:9px 13px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;font:600 14px Figtree,system-ui,sans-serif;cursor:pointer}
+nav button[aria-selected=true]{background:var(--pri);color:var(--onpri);border-color:var(--pri)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.hero{background:var(--pri);color:var(--onpri);border-radius:18px;padding:18px;margin:10px 0}
+.hero small{opacity:.85}
+.hero .big{font-size:38px;font-weight:800;letter-spacing:-1px;color:var(--acc)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat b{display:block;font-size:20px}
+.stat span{color:var(--mute);font-size:13px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.mute{color:var(--mute);font-size:14px}
+.tag{font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.ok{color:var(--ok)}.no{color:var(--no)}.warn{color:var(--warn)}
+.btn{border:0;border-radius:10px;font:600 15px Figtree,system-ui,sans-serif;cursor:pointer;background:var(--pri);color:var(--onpri);padding:11px 14px}
+.btn.full{width:100%}.btn.sm{padding:7px 11px;font-size:14px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.red{background:var(--no);color:#fff}
+.btn:disabled{opacity:.5}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+label{display:block;font-weight:600;margin-top:10px;font-size:14px}
+input,select,textarea{display:block;width:100%;margin-top:4px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.two{display:flex;gap:8px;margin-top:14px}.two .btn{flex:1}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sh{background:var(--bg);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.sh h3{margin:0 0 4px}
+.hide{display:none!important}
+.auth{max-width:420px;margin:0 auto;padding:0 16px}
+.link{background:none;border:0;color:var(--pri);font:600 14px Figtree,system-ui,sans-serif;padding:8px 0;cursor:pointer;text-decoration:underline}
+@media (prefers-color-scheme:dark){.link{color:var(--acc)}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="sheet" class="hide"></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,updateProfile} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,collection,doc,onSnapshot,setDoc,updateDoc,query,orderBy,limit,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ====== BANDIKA firebaseConfig YAKO HAPA CHINI ====== */
+const FIREBASE_CONFIG={
+apiKey:"AIzaSyAlu6s2E-1s9wiktvoBERX7kpBnC8pUYlo",
+authDomain:"classmates-deb96.firebaseapp.com",
+projectId:"classmates-deb96",
+storageBucket:"classmates-deb96.firebasestorage.app",
+messagingSenderId:"752529159237",
+appId:"1:752529159237:web:cf21fef65529305c545f2c"};
+/* ==================================================== */
+
+const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const tsh=n=>"TSh "+Number(n||0).toLocaleString("en-US");
+const sum=a=>a.reduce((s,x)=>s+(x.amount||0),0);
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+const when=t=>new Date(t).toLocaleString("sw-TZ");
+const RL={member:"Mwanachama",chair:"Mwenyekiti",secretary:"Katibu",treasurer:"Mweka Hazina",admin:"Admin"};
+const MET=["M-Pesa","Tigo Pesa","Airtel Money","HaloPesa","Pesa taslimu","Benki"];
+const DEFCAT=["Dharura","Msiba","Matibabu","Harusi na sherehe","Msaada kwa mwanachama","Maendeleo ya kikundi","Nyinginezo"];
+const ST={confirmed:["Imethibitishwa","ok"],pending:["Inasubiri","warn"],void:["Imebatilishwa","no"],approved:["Imeidhinishwa","ok"]};
+const tag=s=>'<span class="tag '+(ST[s]||["",""])[1]+'">'+(ST[s]||[s])[0]+'</span>';
+
+let auth,db,user=null,me=null,U=[],K=[],X=[],A=[],CAT=[],LOG=[];
+let view="dash",unUser=null,uns=[],mode="login",flt={q:"",cat:"",st:"",lim:30};
+const R=()=>me&&me.role;
+const isT=()=>["admin","treasurer"].includes(R());
+const isCh=()=>["admin","chair"].includes(R());
+const canPost=()=>["admin","chair","secretary"].includes(R());
+const canMem=()=>["admin","secretary"].includes(R());
+const isLead=()=>["admin","chair","secretary","treasurer"].includes(R());
+
+const configured=!FIREBASE_CONFIG.apiKey.startsWith("PASTE");
+if(configured){auth=getAuth(initializeApp(FIREBASE_CONFIG));db=getFirestore(auth.app)}
+
+function errMsg(c){return({"auth/invalid-credential":"Email au password si sahihi.","auth/wrong-password":"Email au password si sahihi.","auth/user-not-found":"Email au password si sahihi.","auth/invalid-email":"Email si sahihi.","auth/email-already-in-use":"Email hii tayari ina akaunti.","auth/weak-password":"Password iwe na herufi 6 au zaidi.","auth/too-many-requests":"Majaribio mengi. Subiri kidogo kisha ujaribu tena.","auth/network-request-failed":"Hakuna mtandao."})[c]||("Imeshindwa ("+c+")")}
+
+/* ---------- skrini za kuingia ---------- */
+function head(){return '<div class="auth"><h1>Classmates IBSS-2022</h1><p class="sub">Mfumo wa Michango na Welfare</p>'}
+function drawAuth(){
+const reg=mode==="register",fg=mode==="forgot";
+$("app").innerHTML=head()+'<form id="af" class="card">'+
+(reg?'<label>Jina kamili<input name="name" required autocomplete="name"></label>':'')+
+'<label>Email<input name="email" type="email" required autocomplete="username"></label>'+
+(fg?'':'<label>Password<input name="pw" type="password" required minlength="6" autocomplete="'+(reg?"new-password":"current-password")+'"></label>')+
+(reg?'<label>Rudia password<input name="pw2" type="password" required minlength="6" autocomplete="new-password"></label>':'')+
+'<p id="ae" class="no"></p><button class="btn full" id="ab">'+(reg?"Jisajili":fg?"Tuma link ya kubadilisha password":"Ingia")+'</button></form>'+
+'<div class="acts">'+(mode!=="login"?'<button class="link" data-a="m" data-i="login">Ingia</button>':'')+(!reg?'<button class="link" data-a="m" data-i="register">Jisajili</button>':'')+(mode==="login"?'<button class="link" data-a="m" data-i="forgot">Umesahau password?</button>':'')+'</div>'+
+(reg?'<p class="mute">Baada ya kujisajili, Katibu atakuidhinisha ili uanze kutumia mfumo.</p>':'')+'</div>';
+$("af").onsubmit=async e=>{
+e.preventDefault();const f=Object.fromEntries(new FormData(e.target)),er=$("ae");er.textContent="";$("ab").disabled=true;
+try{
+if(fg){await sendPasswordResetEmail(auth,f.email.trim());er.className="ok";er.textContent="Angalia email yako kwa link ya kubadilisha password."}
+else if(reg){
+if(f.pw!==f.pw2)throw{code:"pw-mismatch"};
+const c=await createUserWithEmailAndPassword(auth,f.email.trim(),f.pw);
+await updateProfile(c.user,{displayName:f.name.trim()});
+await mkProfile(c.user,f.name.trim());
+}else await signInWithEmailAndPassword(auth,f.email.trim(),f.pw);
+}catch(x){er.className="no";er.textContent=x.code==="pw-mismatch"?"Password hazifanani.":errMsg(x.code||String(x))}
+$("ab").disabled=false};
+}
+function mkProfile(u,name){return setDoc(doc(db,"users",u.uid),{name:name||u.displayName||u.email,email:u.email,role:"member",status:"pending",memberNo:"",createdAt:Date.now()})}
+
+function drawWait(){
+const rej=me.status==="rejected";
+$("app").innerHTML=head()+'<div class="card"><b>'+esc(me.name)+'</b><p>'+(rej?'Ombi lako la uanachama halikukubaliwa. Wasiliana na Katibu.':'Usajili wako umepokelewa. Subiri Katibu au Admin akuidhinishe, kisha fungua tena ukurasa huu.')+'</p></div><button class="btn ghost full" data-a="out">Toka</button></div>';
+}
+function drawLoad(){
+$("app").innerHTML=head()+'<p class="mute">Inapakia...</p><button class="link" data-a="fix">Imekwama? Kamilisha usajili</button><button class="link" data-a="out">Toka</button></div>';
+}
+function drawSetup(){
+$("app").innerHTML=head()+'<div class="card"><b>Kuweka mipangilio</b><p>Fungua faili hili, tafuta <code>FIREBASE_CONFIG</code> na ubandike maadili ya Firebase project yako, kisha lipakie tena.</p></div></div>';
+}
+
+/* ---------- data ---------- */
+function stop(){uns.forEach(f=>f());uns=[];if(unUser){unUser();unUser=null}U=[];K=[];X=[];A=[];CAT=[];LOG=[];me=null}
+function listen(){
+const L=(q,fn)=>uns.push(onSnapshot(q,s=>{fn(s.docs.map(d=>({id:d.id,...d.data()})));draw()},e=>console.log(e.code)));
+L(collection(db,"users"),a=>U=a.sort((x,y)=>(x.memberNo||"zz").localeCompare(y.memberNo||"zz")||x.name.localeCompare(y.name)));
+L(collection(db,"categories"),a=>CAT=a.sort((x,y)=>x.name.localeCompare(y.name)));
+L(query(collection(db,"contributions"),orderBy("createdAt","desc")),a=>K=a);
+L(query(collection(db,"expenses"),orderBy("createdAt","desc")),a=>X=a);
+L(query(collection(db,"announcements"),orderBy("createdAt","desc")),a=>A=a);
+if(isLead())L(query(collection(db,"auditLogs"),orderBy("createdAt","desc"),limit(60)),a=>LOG=a);
+}
+function begin(){
+if(!configured)return drawSetup();
+onAuthStateChanged(auth,u=>{
+const prev=user&&user.uid;user=u;
+if(!u){stop();drawAuth();return}
+if(prev===u.uid&&unUser)return;
+stop();drawLoad();
+unUser=onSnapshot(doc(db,"users",u.uid),s=>{
+const had=me&&me.status==="approved";
+me=s.exists()?{id:s.id,...s.data()}:null;
+if(me&&me.status==="approved"&&!had){uns.forEach(f=>f());uns=[];listen()}
+draw()},()=>{});
+});
+}
+function draw(){
+if(!user)return;
+if(!me)return drawLoad();
+if(me.status!=="approved")return drawWait();
+const tabs=[["dash","Nyumbani"],["k","Michango"],["x","Matumizi"],["a","Matangazo"],["m","Wanachama"]].concat(isLead()?[["log","Kumbukumbu"]]:[],[["me","Mimi"]]);
+if(!tabs.some(t=>t[0]===view))view="dash";
+$("app").innerHTML='<h1>Classmates IBSS-2022</h1><p class="sub">'+esc(me.name)+' · '+RL[me.role]+(me.memberNo?' · '+esc(me.memberNo):'')+'</p><nav>'+tabs.map(t=>'<button data-a="v" data-i="'+t[0]+'" aria-selected="'+(view===t[0])+'">'+t[1]+'</button>').join("")+'</nav><div id="v"></div>';
+({dash:vDash,k:vK,x:vX,a:vA,m:vM,log:vLog,me:vMe})[view]();
+}
+
+/* ---------- hesabu ---------- */
+function fin(){
+const c=K.filter(k=>k.status==="confirmed"),e=X.filter(x=>x.status==="approved");
+return{c,e,inc:sum(c),exp:sum(e),bal:sum(c)-sum(e)};
+}
+
+/* ---------- views ---------- */
+function vDash(){
+const f=fin(),yr=today().slice(0,4),mon={},cat={};
+f.c.filter(k=>(k.date||"").startsWith(yr)).forEach(k=>{const m=k.date.slice(0,7);mon[m]=(mon[m]||0)+k.amount});
+f.c.forEach(k=>cat[k.categoryName]=(cat[k.categoryName]||0)+k.amount);
+const mine=sum(f.c.filter(k=>k.memberUid===user.uid));
+const pend=K.filter(k=>k.status==="pending").length,pu=U.filter(u=>u.status==="pending").length,px=X.filter(x=>x.status==="pending").length;
+$("v").innerHTML='<div class="hero"><small>Salio lililopo</small><div class="big">'+tsh(f.bal)+'</div><small>Michango iliyothibitishwa '+tsh(f.inc)+' − Matumizi yaliyoidhinishwa '+tsh(f.exp)+'</small></div>'+
+'<div class="grid"><div class="card stat"><b>'+U.filter(u=>u.status==="approved").length+'</b><span>Wanachama</span></div><div class="card stat"><b>'+tsh(mine)+'</b><span>Michango yako</span></div></div>'+
+(isT()&&pend?'<div class="card warn">Malipo '+pend+' yanasubiri uthibitisho.</div>':'')+
+(isCh()&&px?'<div class="card warn">Matumizi '+px+' yanasubiri idhini.</div>':'')+
+(canMem()&&pu?'<div class="card warn">Wanachama '+pu+' wanasubiri idhini.</div>':'')+
+'<h2>Matangazo ya karibuni</h2>'+(A.slice(0,3).map(annRow).join("")||'<p class="mute">Hakuna matangazo bado.</p>')+
+'<h2>Miamala ya karibuni</h2>'+(f.c.slice(0,5).map(k=>'<div class="row"><div class="top"><b>'+esc(k.memberName)+'</b><b>'+tsh(k.amount)+'</b></div><div class="mute">'+esc(k.categoryName)+' · '+esc(k.date)+'</div></div>').join("")||'<p class="mute">Hakuna michango iliyothibitishwa bado.</p>')+
+'<h2>Kwa mwezi ('+yr+')</h2>'+(Object.keys(mon).sort().reverse().map(m=>'<div class="row top"><span>'+m+'</span><b>'+tsh(mon[m])+'</b></div>').join("")||'<p class="mute">Hakuna data.</p>')+
+'<h2>Kwa aina</h2>'+(Object.keys(cat).sort().map(c=>'<div class="row top"><span>'+esc(c)+'</span><b>'+tsh(cat[c])+'</b></div>').join("")||'<p class="mute">Hakuna data.</p>');
+}
+
+function kList(){
+const q=flt.q.toLowerCase();
+return K.filter(k=>(!flt.cat||k.categoryId===flt.cat)&&(!flt.st||k.status===flt.st)&&(!q||[k.memberName,k.memberNo,k.ref].some(s=>(s||"").toLowerCase().includes(q))));
+}
+function vK(){
+const L=kList();
+$("v").innerHTML='<div class="acts"><button class="btn sm" data-a="repK">Ripoti malipo yangu</button>'+(isT()?'<button class="btn sm" data-a="newK">Rekodi mchango</button><button class="btn sm ghost" data-a="seed">Weka aina za mwanzo</button>':'')+'<button class="btn sm ghost" data-a="csv">Pakua CSV</button></div>'+
+'<div class="card"><input id="fq" placeholder="Tafuta jina, namba au reference" value="'+esc(flt.q)+'"><div class="two"><select id="fc"><option value="">Aina zote</option>'+CAT.map(c=>'<option value="'+c.id+'"'+(flt.cat===c.id?" selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select><select id="fs"><option value="">Hali zote</option>'+["confirmed","pending","void"].map(s=>'<option value="'+s+'"'+(flt.st===s?" selected":"")+'>'+ST[s][0]+'</option>').join("")+'</select></div></div>'+
+'<p class="mute">'+L.length+' rekodi · Jumla iliyothibitishwa: '+tsh(sum(L.filter(k=>k.status==="confirmed")))+'</p><div id="kl">'+kRows(L)+'</div>';
+$("fq").oninput=e=>{flt.q=e.target.value;flt.lim=30;$("kl").innerHTML=kRows(kList())};
+$("fc").onchange=e=>{flt.cat=e.target.value;flt.lim=30;vK()};
+$("fs").onchange=e=>{flt.st=e.target.value;flt.lim=30;vK()};
+}
+function kRows(L){
+return (L.slice(0,flt.lim).map(k=>'<div class="row"><div class="top"><b>'+esc(k.memberName)+(k.memberNo?' <span class="mute">'+esc(k.memberNo)+'</span>':'')+'</b><b>'+tsh(k.amount)+'</b></div><div class="mute">'+esc(k.categoryName)+' · '+esc(k.date)+' · '+esc(k.method)+(k.ref?' · '+esc(k.ref):'')+'</div>'+(k.note?'<div class="mute">'+esc(k.note)+'</div>':'')+(k.status==="void"?'<div class="no mute">Sababu: '+esc(k.voidReason)+'</div>':'')+'<div class="acts">'+tag(k.status)+(isT()&&k.status==="pending"?'<button class="btn sm" data-a="conf" data-i="'+k.id+'">Thibitisha</button>':'')+(isT()&&k.status!=="void"?'<button class="btn sm red" data-a="voidK" data-i="'+k.id+'">Batilisha</button>':'')+'</div></div>').join("")||'<p class="mute">Hakuna rekodi.</p>')+(L.length>flt.lim?'<button class="btn ghost full" data-a="more">Onyesha zaidi</button>':'');
+}
+
+function vX(){
+const f=fin();
+$("v").innerHTML='<div class="card stat"><b>'+tsh(f.exp)+'</b><span>Matumizi yaliyoidhinishwa · Salio '+tsh(f.bal)+'</span></div>'+(isT()?'<div class="acts"><button class="btn sm" data-a="newX">Rekodi matumizi</button></div>':'')+
+(X.map(x=>'<div class="row"><div class="top"><b>'+esc(x.title)+'</b><b>'+tsh(x.amount)+'</b></div><div class="mute">'+esc(x.categoryName)+' · '+esc(x.date)+' · Ameandika: '+esc(x.recordedByName)+'</div>'+(x.note?'<div class="mute">'+esc(x.note)+'</div>':'')+(x.status==="void"?'<div class="no mute">Sababu: '+esc(x.voidReason)+'</div>':'')+(x.approvedByName?'<div class="mute">Ameidhinisha: '+esc(x.approvedByName)+'</div>':'')+'<div class="acts">'+tag(x.status)+(isCh()&&x.status==="pending"?'<button class="btn sm" data-a="appX" data-i="'+x.id+'">Idhinisha</button>':'')+(isCh()&&x.status!=="void"?'<button class="btn sm red" data-a="voidX" data-i="'+x.id+'">Batilisha</button>':'')+'</div></div>').join("")||'<p class="mute">Hakuna matumizi bado.</p>');
+}
+function annRow(a){return '<div class="card"><b>'+esc(a.title)+'</b><div class="mute">'+esc(a.authorName)+' · '+when(a.createdAt)+'</div><p style="white-space:pre-wrap;margin:6px 0 0">'+esc(a.body)+'</p></div>'}
+function vA(){$("v").innerHTML=(canPost()?'<div class="acts"><button class="btn sm" data-a="newA">Tangaza</button></div>':'')+(A.map(annRow).join("")||'<p class="mute">Hakuna matangazo bado.</p>')}
+
+function vM(){
+const ap=U.filter(u=>u.status==="approved"),pe=U.filter(u=>u.status==="pending");
+$("v").innerHTML=(canMem()&&pe.length?'<h2>Wanaosubiri idhini</h2>'+pe.map(u=>'<div class="row"><b>'+esc(u.name)+'</b><div class="mute">'+esc(u.email)+'</div><div class="acts"><button class="btn sm" data-a="appU" data-i="'+u.id+'">Idhinisha</button><button class="btn sm red" data-a="rejU" data-i="'+u.id+'">Kataa</button></div></div>').join(""):"")+
+'<h2>Wanachama ('+ap.length+')</h2>'+ap.map(u=>'<div class="row"><div class="top"><b>'+esc(u.name)+'</b><span class="mute">'+esc(u.memberNo||"-")+'</span></div>'+(R()==="admin"&&u.id!==user.uid?'<select data-role="'+u.id+'">'+Object.keys(RL).map(r=>'<option value="'+r+'"'+(u.role===r?" selected":"")+'>'+RL[r]+'</option>').join("")+'</select>':'<div class="mute">'+RL[u.role]+'</div>')+'</div>').join("");
+}
+function vLog(){$("v").innerHTML='<p class="mute">Vitendo 60 vya mwisho. Kumbukumbu hizi haziwezi kubadilishwa wala kufutwa.</p>'+(LOG.map(l=>'<div class="row"><b>'+esc(l.action)+'</b><div class="mute">'+esc(l.detail)+'</div><div class="mute">'+esc(l.byName)+' · '+when(l.createdAt)+'</div></div>').join("")||'<p class="mute">Hakuna bado.</p>')}
+function vMe(){
+$("v").innerHTML='<div class="card"><form id="nf"><label>Jina<input name="name" value="'+esc(me.name)+'" required></label><button class="btn full" style="margin-top:10px">Hifadhi jina</button></form></div><div class="card"><div class="mute">Email</div><b>'+esc(me.email)+'</b><div class="mute" style="margin-top:8px">Namba ya uanachama</div><b>'+esc(me.memberNo||"-")+'</b><div class="mute" style="margin-top:8px">Jukumu</div><b>'+RL[me.role]+'</b></div><div class="acts"><button class="btn ghost" data-a="rp">Badilisha password</button><button class="btn red" data-a="out">Toka</button></div>';
+$("nf").onsubmit=async e=>{e.preventDefault();const n=new FormData(e.target).get("name").trim();if(n)try{await updateDoc(doc(db,"users",user.uid),{name:n});alert("Imehifadhiwa.")}catch(x){alert("Imeshindwa.")}};
+}
+
+/* ---------- fomu ---------- */
+const inp=(n,l,t,x)=>'<label>'+l+'<input name="'+n+'" type="'+(t||"text")+'" '+(x||"")+'></label>';
+const sel=(n,l,o)=>'<label>'+l+'<select name="'+n+'">'+o.map(p=>'<option value="'+esc(p[0])+'">'+esc(p[1])+'</option>').join("")+'</select></label>';
+function sheet(title,html,fn){
+const s=$("sheet");
+s.innerHTML='<div class="sh"><h3>'+title+'</h3><form id="sf">'+html+'<p id="se" class="no"></p><div class="two"><button type="button" class="btn ghost" id="sx">Ghairi</button><button class="btn" id="ss">Hifadhi</button></div></form></div>';
+s.classList.remove("hide");
+$("sx").onclick=()=>s.classList.add("hide");
+$("sf").onsubmit=async e=>{e.preventDefault();$("se").textContent="";$("ss").disabled=true;
+try{await fn(Object.fromEntries(new FormData(e.target)));s.classList.add("hide")}catch(x){$("se").textContent=x.message||"Imeshindwa."}
+$("ss").disabled=false};
+}
+function aud(b,action,detail){b.set(doc(collection(db,"auditLogs")),{action,detail,byUid:user.uid,byName:me.name,createdAt:Date.now()})}
+function amt(v){const a=Math.round(+v);if(!(a>0))throw new Error("Weka kiasi sahihi.");return a}
+
+function formK(report){
+const mem=U.filter(u=>u.status==="approved");
+sheet(report?"Ripoti malipo":"Rekodi mchango",(report?"":sel("mid","Mwanachama",mem.map(u=>[u.id,(u.memberNo?u.memberNo+" · ":"")+u.name])))+sel("cid","Aina ya mchango",CAT.filter(c=>c.active!==false).map(c=>[c.id,c.name]))+inp("amount","Kiasi (TSh)","number",'min="1" step="1" inputmode="numeric" required')+inp("date","Tarehe","date",'required value="'+today()+'"')+sel("method","Njia ya malipo",MET.map(m=>[m,m]))+inp("ref","Namba ya muamala (hiari)")+inp("note","Maelezo (hiari)"),async f=>{
+const c=CAT.find(x=>x.id===f.cid);if(!c)throw new Error("Hakuna aina ya mchango. Mweka hazina aziweke kwanza.");
+const a=amt(f.amount),m=report?me:U.find(u=>u.id===f.mid),uid=report?user.uid:f.mid,ref=(f.ref||"").trim();
+if(!m)throw new Error("Chagua mwanachama.");
+const d={memberUid:uid,memberName:m.name,memberNo:m.memberNo||"",categoryId:c.id,categoryName:c.name,amount:a,date:f.date,method:f.method,ref,note:(f.note||"").trim(),status:report?"pending":"confirmed",recordedBy:user.uid,recordedByName:me.name,createdAt:Date.now()};
+if(!report){d.confirmedBy=user.uid;d.confirmedByName=me.name}
+const key=ref.replace(/[^A-Za-z0-9]/g,"").slice(0,60);
+const dr=key?doc(db,"contributions","r_"+key):doc(collection(db,"contributions"));
+const b=writeBatch(db);b.set(dr,d);
+if(!report)aud(b,"Mchango umerekodiwa",m.name+" · "+c.name+" · "+tsh(a)+(ref?" · "+ref:""));
+try{await b.commit()}catch(e){throw new Error(key?"Namba hii ya muamala imeshatumika, au huna ruhusa.":"Imeshindwa kuhifadhi.")}
+});
+}
+function formX(){
+sheet("Rekodi matumizi",inp("title","Maelezo mafupi","text","required")+inp("amount","Kiasi (TSh)","number",'min="1" step="1" inputmode="numeric" required')+sel("cat","Aina",CAT.map(c=>[c.name,c.name]).concat([["Nyinginezo","Nyinginezo"]]))+inp("date","Tarehe","date",'required value="'+today()+'"')+inp("note","Maelezo zaidi (hiari)"),async f=>{
+const a=amt(f.amount);
+await setDoc(doc(collection(db,"expenses")),{title:f.title.trim(),amount:a,categoryName:f.cat,date:f.date,note:(f.note||"").trim(),status:"pending",recordedBy:user.uid,recordedByName:me.name,createdAt:Date.now()});
+});
+}
+function formA(){
+sheet("Tangazo jipya",inp("title","Kichwa","text","required")+'<label>Ujumbe<textarea name="body" rows="5" required></textarea></label>',async f=>{
+await setDoc(doc(collection(db,"announcements")),{title:f.title.trim(),body:f.body.trim(),authorName:me.name,byUid:user.uid,createdAt:Date.now()});
+});
+}
+
+/* ---------- vitendo ---------- */
+async function run(fn){try{await fn()}catch(e){alert("Imeshindwa. Huenda huna ruhusa au hakuna mtandao.")}}
+document.body.addEventListener("click",e=>{
+const b=e.target.closest("[data-a]");if(!b)return;
+const a=b.dataset.a,i=b.dataset.i;
+if(a==="m"){mode=i;drawAuth()}
+else if(a==="v"){view=i;draw()}
+else if(a==="out")signOut(auth);
+else if(a==="fix")run(()=>mkProfile(user));
+else if(a==="rp")sendPasswordResetEmail(auth,user.email).then(()=>alert("Link imetumwa kwenye email yako.")).catch(()=>alert("Imeshindwa."));
+else if(a==="more"){flt.lim+=30;vK()}
+else if(a==="repK")formK(true);
+else if(a==="newK")formK(false);
+else if(a==="newX")formX();
+else if(a==="newA")formA();
+else if(a==="seed")run(async()=>{if(CAT.length&&!confirm("Aina zipo tayari. Ongeza za mwanzo tena?"))return;const bt=writeBatch(db);DEFCAT.forEach(n=>{if(!CAT.some(c=>c.name===n))bt.set(doc(collection(db,"categories")),{name:n,active:true})});await bt.commit()});
+else if(a==="conf")run(async()=>{const k=K.find(x=>x.id===i),bt=writeBatch(db);bt.update(doc(db,"contributions",i),{status:"confirmed",confirmedBy:user.uid,confirmedByName:me.name});aud(bt,"Malipo yamethibitishwa",k.memberName+" · "+tsh(k.amount)+(k.ref?" · "+k.ref:""));await bt.commit()});
+else if(a==="voidK")run(async()=>{const k=K.find(x=>x.id===i),r=(prompt("Sababu ya kubatilisha mchango huu?")||"").trim();if(!r)return;const bt=writeBatch(db);bt.update(doc(db,"contributions",i),{status:"void",voidReason:r,voidedBy:user.uid,voidedByName:me.name});aud(bt,"Mchango umebatilishwa",k.memberName+" · "+tsh(k.amount)+" · Sababu: "+r);await bt.commit()});
+else if(a==="appX")run(async()=>{const x=X.find(y=>y.id===i);if(x.amount>fin().bal&&!confirm("Kiasi hiki ni kikubwa kuliko salio lililopo. Idhinisha hata hivyo?"))return;const bt=writeBatch(db);bt.update(doc(db,"expenses",i),{status:"approved",approvedBy:user.uid,approvedByName:me.name});aud(bt,"Matumizi yameidhinishwa",x.title+" · "+tsh(x.amount));await bt.commit()});
+else if(a==="voidX")run(async()=>{const x=X.find(y=>y.id===i),r=(prompt("Sababu ya kubatilisha matumizi haya?")||"").trim();if(!r)return;const bt=writeBatch(db);bt.update(doc(db,"expenses",i),{status:"void",voidReason:r,approvedBy:user.uid,approvedByName:me.name});aud(bt,"Matumizi yamebatilishwa",x.title+" · "+tsh(x.amount)+" · Sababu: "+r);await bt.commit()});
+else if(a==="appU")run(async()=>{const u=U.find(x=>x.id===i),n=(prompt("Namba ya uanachama kwa "+u.name+" (mfano IBSS22-001)")||"").trim();if(!n)return;if(U.some(x=>x.memberNo===n)){alert("Namba hii imeshatumika.");return}const bt=writeBatch(db);bt.update(doc(db,"users",i),{status:"approved",memberNo:n});aud(bt,"Mwanachama ameidhinishwa",u.name+" · "+n);await bt.commit()});
+else if(a==="rejU")run(async()=>{const u=U.find(x=>x.id===i);if(!confirm("Kataa ombi la "+u.name+"?"))return;const bt=writeBatch(db);bt.update(doc(db,"users",i),{status:"rejected"});aud(bt,"Ombi la uanachama limekataliwa",u.name);await bt.commit()});
+else if(a==="csv"){
+const L=kList(),h=["ID","Jina","Namba","Aina","Kiasi","Tarehe","Njia","Reference","Hali"],q=s=>'"'+String(s==null?"":s).replace(/"/g,'""')+'"';
+const t=[h.map(q).join(",")].concat(L.map(k=>[k.id,k.memberName,k.memberNo,k.categoryName,k.amount,k.date,k.method,k.ref,ST[k.status][0]].map(q).join(","))).join("\n");
+const l=document.createElement("a");l.href=URL.createObjectURL(new Blob(["\ufeff"+t],{type:"text/csv"}));l.download="michango-"+today()+".csv";l.click();
+}
+});
+document.body.addEventListener("change",e=>{
+const s=e.target.closest("[data-role]");if(!s)return;
+const u=U.find(x=>x.id===s.dataset.role),r=s.value;
+if(!confirm("Mpe "+u.name+" jukumu la "+RL[r]+"?")){draw();return}
+run(async()=>{const bt=writeBatch(db);bt.update(doc(db,"users",u.id),{role:r});aud(bt,"Jukumu limebadilishwa",u.name+": "+RL[u.role]+" → "+RL[r]);await bt.commit()});
+});
+begin();
+</script>
+</body>
+</html>
