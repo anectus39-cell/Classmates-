@@ -82,7 +82,7 @@ const ST={confirmed:["Imethibitishwa","ok"],pending:["Inasubiri","warn"],void:["
 const tag=s=>'<span class="tag '+(ST[s]||["",""])[1]+'">'+(ST[s]||[s])[0]+'</span>';
 
 let auth,db,user=null,me=null,U=[],K=[],X=[],A=[],CAT=[],LOG=[];
-let view="dash",unUser=null,uns=[],mode="login",flt={q:"",cat:"",st:"",lim:30};
+let lerr="",view="dash",unUser=null,uns=[],mode="login",flt={q:"",cat:"",st:"",lim:30};
 const R=()=>me&&me.role;
 const isT=()=>["admin","treasurer"].includes(R());
 const isCh=()=>["admin","chair"].includes(R());
@@ -124,10 +124,10 @@ function mkProfile(u,name){return setDoc(doc(db,"users",u.uid),{name:name||u.dis
 
 function drawWait(){
 const rej=me.status==="rejected";
-$("app").innerHTML=head()+'<div class="card"><b>'+esc(me.name)+'</b><p>'+(rej?'Ombi lako la uanachama halikukubaliwa. Wasiliana na Katibu.':'Usajili wako umepokelewa. Subiri Katibu au Admin akuidhinishe, kisha fungua tena ukurasa huu.')+'</p></div><button class="btn ghost full" data-a="out">Toka</button></div>';
+$("app").innerHTML=head()+'<div class="card"><b>'+esc(me.name)+'</b><p>'+(rej?'Ombi lako la uanachama halikukubaliwa. Wasiliana na Katibu.':'Usajili wako umepokelewa. Subiri Katibu au Admin akuidhinishe, kisha fungua tena ukurasa huu.')+'</p><p class="mute">Taarifa za ufundi:<br>ID: '+esc(me.id)+'<br>status: '+esc(JSON.stringify(me.status))+'<br>role: '+esc(JSON.stringify(me.role))+'</p></div><button class="btn ghost full" data-a="out">Toka</button></div>';
 }
 function drawLoad(){
-$("app").innerHTML=head()+'<p class="mute">Inapakia...</p><button class="link" data-a="fix">Imekwama? Kamilisha usajili</button><button class="link" data-a="out">Toka</button></div>';
+$("app").innerHTML=head()+'<p class="mute">Inapakia...</p>'+(lerr?'<p class="no">Kosa: '+esc(lerr)+'</p>':'')+'<button class="link" data-a="fix">Imekwama? Kamilisha usajili</button><button class="link" data-a="out">Toka</button></div>';
 }
 function drawSetup(){
 $("app").innerHTML=head()+'<div class="card"><b>Kuweka mipangilio</b><p>Fungua faili hili, tafuta <code>FIREBASE_CONFIG</code> na ubandike maadili ya Firebase project yako, kisha lipakie tena.</p></div></div>';
@@ -155,7 +155,7 @@ unUser=onSnapshot(doc(db,"users",u.uid),s=>{
 const had=me&&me.status==="approved";
 me=s.exists()?{id:s.id,...s.data()}:null;
 if(me&&me.status==="approved"&&!had){uns.forEach(f=>f());uns=[];listen()}
-draw()},()=>{});
+draw()},e=>{lerr=e.code||String(e);draw()});
 });
 }
 function draw(){
