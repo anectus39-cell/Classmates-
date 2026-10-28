@@ -93,7 +93,7 @@ const isLead=()=>["admin","chair","secretary","treasurer"].includes(R());
 const configured=!FIREBASE_CONFIG.apiKey.startsWith("PASTE");
 if(configured){auth=getAuth(initializeApp(FIREBASE_CONFIG));db=getFirestore(auth.app)}
 
-function errMsg(c){return({"auth/invalid-credential":"Email au password si sahihi.","auth/wrong-password":"Email au password si sahihi.","auth/user-not-found":"Email au password si sahihi.","auth/invalid-email":"Email si sahihi.","auth/email-already-in-use":"Email hii tayari ina akaunti.","auth/weak-password":"Password iwe na herufi 6 au zaidi.","auth/too-many-requests":"Majaribio mengi. Subiri kidogo kisha ujaribu tena.","auth/network-request-failed":"Hakuna mtandao."})[c]||("Imeshindwa ("+c+")")}
+function errMsg(c){return({"bad-id":"Weka email sahihi au namba ya simu (mfano 0712345678).","phone-reset":"Akaunti ya namba ya simu haiwezi kubadilishwa password kwa email. Wasiliana na Admin.","auth/invalid-credential":"Email/namba au password si sahihi.","auth/wrong-password":"Email/namba au password si sahihi.","auth/user-not-found":"Email/namba au password si sahihi.","auth/invalid-email":"Email au namba si sahihi.","auth/email-already-in-use":"Email au namba hii tayari ina akaunti.","auth/weak-password":"Password iwe na herufi 6 au zaidi.","auth/too-many-requests":"Majaribio mengi. Subiri kidogo kisha ujaribu tena.","auth/network-request-failed":"Hakuna mtandao."})[c]||("Imeshindwa ("+c+")")}
 
 /* ---------- skrini za kuingia ---------- */
 function head(){return '<div class="auth"><h1>Classmates IBSS-2022</h1><p class="sub">Mfumo wa Michango na Welfare</p>'}
@@ -101,26 +101,28 @@ function drawAuth(){
 const reg=mode==="register",fg=mode==="forgot";
 $("app").innerHTML=head()+'<form id="af" class="card">'+
 (reg?'<label>Jina kamili<input name="name" required autocomplete="name"></label>':'')+
-'<label>Email<input name="email" type="email" required autocomplete="username"></label>'+
+'<label>Email au namba ya simu<input name="email" type="text" required autocomplete="username" placeholder="mfano 0712345678"></label>'+
 (fg?'':'<label>Password<input name="pw" type="password" required minlength="6" autocomplete="'+(reg?"new-password":"current-password")+'"></label>')+
 (reg?'<label>Rudia password<input name="pw2" type="password" required minlength="6" autocomplete="new-password"></label>':'')+
 '<p id="ae" class="no"></p><button class="btn full" id="ab">'+(reg?"Jisajili":fg?"Tuma link ya kubadilisha password":"Ingia")+'</button></form>'+
 '<div class="acts">'+(mode!=="login"?'<button class="link" data-a="m" data-i="login">Ingia</button>':'')+(!reg?'<button class="link" data-a="m" data-i="register">Jisajili</button>':'')+(mode==="login"?'<button class="link" data-a="m" data-i="forgot">Umesahau password?</button>':'')+'</div>'+
-(reg?'<p class="mute">Baada ya kujisajili, Katibu atakuidhinisha ili uanze kutumia mfumo.</p>':'')+'</div>';
+(reg?'<p class="mute">Huna email? Andika namba yako ya simu (mfano 0712345678) badala yake, na utaingia kwa namba hiyo. Baada ya kujisajili, Katibu atakuidhinisha ili uanze kutumia mfumo.</p>':'')+'</div>';
 $("af").onsubmit=async e=>{
 e.preventDefault();const f=Object.fromEntries(new FormData(e.target)),er=$("ae");er.textContent="";$("ab").disabled=true;
 try{
-if(fg){await sendPasswordResetEmail(auth,f.email.trim());er.className="ok";er.textContent="Angalia email yako kwa link ya kubadilisha password."}
+if(fg){if(!f.email.includes("@"))throw{code:"phone-reset"};await sendPasswordResetEmail(auth,f.email.trim());er.className="ok";er.textContent="Angalia email yako kwa link ya kubadilisha password."}
 else if(reg){
 if(f.pw!==f.pw2)throw{code:"pw-mismatch"};
-const c=await createUserWithEmailAndPassword(auth,f.email.trim(),f.pw);
+const c=await createUserWithEmailAndPassword(auth,toAuthEmail(f.email),f.pw);
 await updateProfile(c.user,{displayName:f.name.trim()});
 await mkProfile(c.user,f.name.trim());
-}else await signInWithEmailAndPassword(auth,f.email.trim(),f.pw);
+}else await signInWithEmailAndPassword(auth,toAuthEmail(f.email),f.pw);
 }catch(x){er.className="no";er.textContent=x.code==="pw-mismatch"?"Password hazifanani.":errMsg(x.code||String(x))}
 $("ab").disabled=false};
 }
-function mkProfile(u,name){return setDoc(doc(db,"users",u.uid),{name:name||u.displayName||u.email,email:u.email,role:"member",status:"pending",memberNo:"",createdAt:Date.now()})}
+const PD="phone.ibss22.app";
+function toAuthEmail(v){v=v.trim();if(v.includes("@"))return v;let d=v.replace(/\D/g,"");if(d.startsWith("255"))d="0"+d.slice(3);if(!/^0\d{9}$/.test(d))throw{code:"bad-id"};return d+"@"+PD}
+function mkProfile(u,name){const ph=(u.email||"").endsWith("@"+PD);return setDoc(doc(db,"users",u.uid),{name:name||u.displayName||u.email,email:ph?"":u.email,phone:ph?u.email.split("@")[0]:"",role:"member",status:"pending",memberNo:"",createdAt:Date.now()})}
 
 function drawWait(){
 const rej=me.status==="rejected";
@@ -219,12 +221,12 @@ function vA(){$("v").innerHTML=(canPost()?'<div class="acts"><button class="btn 
 
 function vM(){
 const ap=U.filter(u=>u.status==="approved"),pe=U.filter(u=>u.status==="pending");
-$("v").innerHTML=(canMem()&&pe.length?'<h2>Wanaosubiri idhini</h2>'+pe.map(u=>'<div class="row"><b>'+esc(u.name)+'</b><div class="mute">'+esc(u.email)+'</div><div class="acts"><button class="btn sm" data-a="appU" data-i="'+u.id+'">Idhinisha</button><button class="btn sm red" data-a="rejU" data-i="'+u.id+'">Kataa</button></div></div>').join(""):"")+
+$("v").innerHTML=(canMem()&&pe.length?'<h2>Wanaosubiri idhini</h2>'+pe.map(u=>'<div class="row"><b>'+esc(u.name)+'</b><div class="mute">'+esc(u.email||u.phone)+'</div><div class="acts"><button class="btn sm" data-a="appU" data-i="'+u.id+'">Idhinisha</button><button class="btn sm red" data-a="rejU" data-i="'+u.id+'">Kataa</button></div></div>').join(""):"")+
 '<h2>Wanachama ('+ap.length+')</h2>'+ap.map(u=>'<div class="row"><div class="top"><b>'+esc(u.name)+'</b><span class="mute">'+esc(u.memberNo||"-")+'</span></div>'+(R()==="admin"&&u.id!==user.uid?'<select data-role="'+u.id+'">'+Object.keys(RL).map(r=>'<option value="'+r+'"'+(u.role===r?" selected":"")+'>'+RL[r]+'</option>').join("")+'</select>':'<div class="mute">'+RL[u.role]+'</div>')+'</div>').join("");
 }
 function vLog(){$("v").innerHTML='<p class="mute">Vitendo 60 vya mwisho. Kumbukumbu hizi haziwezi kubadilishwa wala kufutwa.</p>'+(LOG.map(l=>'<div class="row"><b>'+esc(l.action)+'</b><div class="mute">'+esc(l.detail)+'</div><div class="mute">'+esc(l.byName)+' · '+when(l.createdAt)+'</div></div>').join("")||'<p class="mute">Hakuna bado.</p>')}
 function vMe(){
-$("v").innerHTML='<div class="card"><form id="nf"><label>Jina<input name="name" value="'+esc(me.name)+'" required></label><button class="btn full" style="margin-top:10px">Hifadhi jina</button></form></div><div class="card"><div class="mute">Email</div><b>'+esc(me.email)+'</b><div class="mute" style="margin-top:8px">Namba ya uanachama</div><b>'+esc(me.memberNo||"-")+'</b><div class="mute" style="margin-top:8px">Jukumu</div><b>'+RL[me.role]+'</b></div><div class="acts"><button class="btn ghost" data-a="rp">Badilisha password</button><button class="btn red" data-a="out">Toka</button></div>';
+$("v").innerHTML='<div class="card"><form id="nf"><label>Jina<input name="name" value="'+esc(me.name)+'" required></label><button class="btn full" style="margin-top:10px">Hifadhi jina</button></form></div><div class="card"><div class="mute">Email / Simu</div><b>'+esc(me.email||me.phone)+'</b><div class="mute" style="margin-top:8px">Namba ya uanachama</div><b>'+esc(me.memberNo||"-")+'</b><div class="mute" style="margin-top:8px">Jukumu</div><b>'+RL[me.role]+'</b></div><div class="acts">'+(me.email?'<button class="btn ghost" data-a="rp">Badilisha password</button>':'')+'<button class="btn red" data-a="out">Toka</button></div>';
 $("nf").onsubmit=async e=>{e.preventDefault();const n=new FormData(e.target).get("name").trim();if(n)try{await updateDoc(doc(db,"users",user.uid),{name:n});alert("Imehifadhiwa.")}catch(x){alert("Imeshindwa.")}};
 }
 
